@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#070b14">
+    <meta name="description" content="Alur pengembangan Talenan Serbaguna Satu Tangan — proyek teknologi asistif adaptif untuk anak tunadaksa monoplegia brakialis.">
+    <title>Alur Pengembangan Talenan Serbaguna Satu Tangan</title>
+
+    <!-- Tailwind (dipakai oleh konten detail di dalam modal) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#095186',
+                            900: '#0c4a6e',
+                        },
+                        accent: {
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* ============================================================
+           DESIGN TOKENS
+           ============================================================ */
+        :root {
+            --bg: #070b14;
+            --bg-soft: #0b1220;
+            --panel: rgba(17, 25, 41, 0.72);
+            --panel-solid: #0d1526;
+            --line: rgba(148, 163, 184, 0.16);
+            --line-strong: rgba(148, 163, 184, 0.28);
+            --text: #e8eefb;
+            --muted: #94a3b8;
+            --muted-dim: #64748b;
+            --accent: #38bdf8;
+            --accent-2: #0ea5e9;
+            --modal-accent: #38bdf8;
+            --radius: 20px;
+            --shadow: 0 24px 60px -28px rgba(2, 8, 23, 0.9);
+        }
+
+        * { box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 96px;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            overflow-x: hidden;
+        }
+
+        body.modal-open { overflow: hidden; }
+
+        ::selection { background: #0ea5e9; color: #04121f; }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #070b14; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 999px; border: 2px solid #070b14; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        /* ============================================================
+           BACKGROUND FX
+           ============================================================ */
+        .bg-fx {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+            background:
+                radial-gradient(60% 50% at 12% 0%, rgba(14, 165, 233, 0.16) 0%, transparent 70%),
+                radial-gradient(55% 45% at 92% 8%, rgba(139, 92, 246, 0.14) 0%, transparent 70%),
+                radial-gradient(70% 55% at 50% 105%, rgba(16, 185, 129, 0.09) 0%, transparent 70%),
+                var(--bg);
+        }
+
+        .bg-fx::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.055) 1px, transparent 1px);
+            background-size: 56px 56px;
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 20%, transparent 78%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 20%, transparent 78%);
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.5;
+            animation: float 18s ease-in-out infinite;
+        }
+
+        .orb--a {
+            width: 420px; height: 420px;
+            top: -120px; left: -100px;
+            background: rgba(14, 165, 233, 0.28);
+        }
+
+        .orb--b {
+            width: 380px; height: 380px;
+            top: 30%; right: -140px;
+            background: rgba(139, 92, 246, 0.24);
+            animation-delay: -7s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            50% { transform: translate3d(0, 36px, 0) scale(1.06); }
+        }
+
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(7, 11, 20, 0.55);
+            border-bottom: 1px solid transparent;
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .site-header.is-scrolled {
+            background: rgba(7, 11, 20, 0.86);
+            border-bottom-color: var(--line);
+            box-shadow: 0 12px 40px -30px #000;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .header-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text);
+            flex: 0 0 auto;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(140deg, #38bdf8, #6366f1 55%, #8b5cf6);
+            color: #06121f;
+            font-size: 17px;
+            box-shadow: 0 10px 26px -10px rgba(56, 189, 248, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+        .brand-text strong { font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
+        .brand-text small { font-size: 10.5px; color: var(--muted); font-weight: 500; letter-spacing: 0.04em; margin-top: 2px; }
+
+        .stage-nav {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(15, 23, 42, 0.55);
+        }
+
+        .stage-nav a {
+            --dot-accent: #38bdf8;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stage-nav a:hover {
+            color: #fff;
+            background: rgba(148, 163, 184, 0.14);
+            transform: translateY(-1px);
+        }
+
+        .stage-nav a.is-active {
+            color: #05121f;
+            background: var(--dot-accent);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06), 0 6px 18px -6px var(--dot-accent);
+        }
+
+        .header-cta {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #06121f;
+            background: linear-gradient(135deg, #7dd3fc, #38bdf8 45%, #818cf8);
+            box-shadow: 0 10px 26px -12px rgba(56, 189, 248, 0.9);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        }
+
+        .header-cta:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 14px 30px -12px rgba(56, 189, 248, 1); }
+        .header-cta i { font-size: 11px; transition: transform 0.2s ease; }
+        .header-cta:hover i { transform: translateX(2px); }
+
+        .scroll-track { height: 2px; background: transparent; }
+        .scroll-track span {
+            display: block;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #38bdf8, #818cf8, #34d399);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+            transition: width 0.1s linear;
+        }
+
+        /* ============================================================
+           HERO
+           ============================================================ */
+        .shell { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+        .hero {
+            padding: 76px 0 46px;
+            text-align: center;
+            position: relative;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(56, 189, 248, 0.28);
+            background: rgba(8, 47, 73, 0.42);
+            color: #7dd3fc;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            backdrop-filter: blur(8px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .eyebrow i { color: #fbbf24; }
+
+        .hero h1 {
+            margin: 26px auto 0;
+            max-width: 940px;
+            font-size: clamp(2.1rem, 5.4vw, 3.6rem);
+            line-height: 1.04;
+            letter-spacing: -0.035em;
+            font-weight: 800;
+            text-wrap: balance;
+        }
+
+        .hero h1 .grad {
+            display: block;
+            background: linear-gradient(100deg, #7dd3fc 0%, #5eead4 45%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 8px 30px rgba(56, 189, 248, 0.18));
+        }
+
+        .hero > p.lede {
+            max-width: 680px;
+            margin: 22px auto 0;
+            color: #b6c2d6;
+            font-size: clamp(0.95rem, 1.5vw, 1.08rem);
+            line-height: 1.75;
+        }
+
+        .hero > p.lede i { color: #7dd3fc; font-style: normal; font-weight: 600; }
+
+        .hero-actions {
+            margin-top: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 12px 20px;
+            border-radius: 13px;
+            border: 1px solid transparent;
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:focus-visible,
+        .stage-card:focus-visible,
+        .stage-nav a:focus-visible,
+        .icon-btn:focus-visible,
+        .header-cta:focus-visible,
+        .to-top:focus-visible {
+            outline: 2px solid #7dd3fc;
+            outline-offset: 3px;
+        }
+
+        .btn-primary {
+            color: #04121f;
+            background: linear-gradient(135deg, #7dd3fc, #38bdf8 50%, #818cf8);
+            box-shadow: 0 16px 34px -16px rgba(56, 189, 248, 1), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+        }
+
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -16px rgba(56, 189, 248, 1); }
+
+        .btn-soft {
+            color: #cbd5e1;
+            background: rgba(30, 41, 59, 0.55);
+            border-color: var(--line);
+        }
+
+        .btn-soft:hover { transform: translateY(-2px); color: #fff; background: rgba(51, 65, 85, 0.7); border-color: var(--line-strong); }
+
+        .btn i { font-size: 12px; }
+        .btn-primary:hover i.fa-arrow-down { transform: translateY(2px); }
+        .btn i.fa-arrow-down { transition: transform 0.2s ease; }
+
+        .stats {
+            margin: 44px auto 0;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            max-width: 860px;
+            padding: 0;
+        }
+
+        .stat {
+            position: relative;
+            padding: 16px 14px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.32));
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .stat::after {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.5), transparent);
+        }
+
+        .stat dt {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .stat dd {
+            margin: 6px 0 0;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #f1f5f9;
+        }
+
+        .stat dd span { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+
+        .hint {
+            margin: 26px auto 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px dashed rgba(148, 163, 184, 0.24);
+            color: var(--muted);
+            font-size: 11.5px;
+        }
+
+        .hint i { color: #7dd3fc; animation: nudge 2.4s ease-in-out infinite; }
+
+        @keyframes nudge {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(3px); }
+        }
+
+        /* ============================================================
+           STAGES / TIMELINE
+           ============================================================ */
+        .flow-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 26px 0 8px;
+            border-top: 1px solid var(--line);
+            margin-top: 26px;
+        }
+
+        .flow-head .kicker {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            letter-spacing: 0.2em;
+            color: #7dd3fc;
+            text-transform: uppercase;
+            margin: 0 0 8px;
+        }
+
+        .flow-head h2 {
+            margin: 0;
+            font-size: clamp(1.35rem, 3vw, 1.9rem);
+            letter-spacing: -0.03em;
+            font-weight: 800;
+            text-wrap: balance;
+        }
+
+        .flow-head p { margin: 8px 0 0; color: var(--muted); font-size: 13px; max-width: 520px; line-height: 1.6; }
+
+        .flow-legend {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--muted);
+            white-space: nowrap;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .flow-legend .pulse {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #34d399;
+            box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55); }
+            70% { box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+
+        .stages {
+            position: relative;
+            padding: 40px 0 26px;
+        }
+
+        .spine {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 3px;
+            transform: translateX(-50%);
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.14);
+            overflow: hidden;
+        }
+
+        .spine-fill {
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 0%;
+            background: linear-gradient(180deg, #38bdf8, #818cf8 50%, #34d399);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.7);
+            transition: height 0.15s linear;
+        }
+
+        .spine::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(180deg, transparent 0 10px, rgba(7, 11, 20, 0.55) 10px 14px);
+            opacity: 0.65;
+        }
+
+        .stage {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 100px minmax(0, 1fr);
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .stage:last-child { margin-bottom: 0; }
+
+        .stage-node {
+            grid-column: 2;
+            grid-row: 1;
+            justify-self: center;
+            position: relative;
+            z-index: 2;
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            display: grid;
+            place-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 600;
+            color: #04121f;
+            background: linear-gradient(140deg, var(--accent), var(--accent-2));
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow:
+                0 0 0 6px rgba(7, 11, 20, 0.9),
+                0 14px 30px -12px var(--accent),
+                inset 0 1px 0 rgba(255, 255, 255, 0.55);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .stage:hover .stage-node {
+            transform: scale(1.08) rotate(-3deg);
+            box-shadow:
+                0 0 0 6px rgba(7, 11, 20, 0.9),
+                0 18px 38px -10px var(--accent),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        .stage-meta {
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--muted-dim);
+            font-size: 10.5px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            user-select: none;
+        }
+
+        .stage-meta em {
+            font-style: normal;
+            color: var(--accent);
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .stage:nth-child(odd) .stage-card-wrap { grid-column: 3; grid-row: 1; justify-content: flex-start; }
+        .stage:nth-child(odd) .stage-meta { grid-column: 1; align-items: flex-end; text-align: right; }
+
+        .stage:nth-child(even) .stage-card-wrap { grid-column: 1; grid-row: 1; justify-content: flex-end; }
+        .stage:nth-child(even) .stage-meta { grid-column: 3; align-items: flex-start; text-align: left; }
+
+        .stage-card-wrap { display: flex; width: 100%; }
+
+        .stage-card {
+            --card-accent: var(--accent);
+            position: relative;
+            display: block;
+            width: 100%;
+            max-width: 460px;
+            padding: 22px 22px 18px;
+            border-radius: var(--radius);
+            border: 1px solid var(--line);
+            background:
+                linear-gradient(180deg, rgba(30, 41, 59, 0.62), rgba(13, 21, 38, 0.75));
+            color: var(--text);
+            text-decoration: none;
+            text-align: left;
+            overflow: hidden;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stage-card::before {
+            content: "";
+            position: absolute;
+            inset: -1px auto -1px -1px;
+            width: 3px;
+            background: linear-gradient(180deg, var(--accent), transparent 85%);
+            opacity: 0.85;
+        }
+
+        .stage-card::after {
+            content: "";
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            top: -130px;
+            right: -90px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent), transparent 65%);
+            opacity: 0.14;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .stage-card:hover {
+            transform: translateY(-5px);
+            border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+            box-shadow: 0 28px 60px -30px #000, 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), 0 18px 50px -30px var(--accent);
+        }
+
+        .stage-card:hover::after { opacity: 0.24; }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .step-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 12%, transparent);
+            border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+        }
+
+        .step-pill .dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .card-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 10%, rgba(15, 23, 42, 0.6));
+            border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+            font-size: 14px;
+        }
+
+        .stage-card h3 {
+            margin: 0;
+            font-size: 19px;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            font-weight: 800;
+            color: #f4f8ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s ease;
+        }
+
+        .stage-card:hover h3 { color: var(--accent); }
+
+        .stage-card p {
+            margin: 9px 0 0;
+            color: #a9b7cc;
+            font-size: 13px;
+            line-height: 1.65;
+        }
+
+        .card-tags {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .card-tags span {
+            font-size: 10.5px;
+            font-weight: 600;
+            color: #c4d2e6;
+            padding: 5px 9px;
+            border-radius: 7px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+        }
+
+        .card-open {
+            margin-top: 16px;
+            padding-top: 13px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.02em;
+        }
+
+        .card-open i {
+            font-size: 11px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: color-mix(in srgb, var(--accent) 12%, transparent);
+            border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+            transition: transform 0.25s ease, background 0.25s ease;
+        }
+
+        .stage-card:hover .card-open i {
+            transform: translateX(4px);
+            background: color-mix(in srgb, var(--accent) 22%, transparent);
+        }
+
+        /* Reveal animation */
+        .reveal {
+            opacity: 0;
+            transform: translateY(22px);
+            transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+            transition-delay: var(--delay, 0ms);
+        }
+
+        .reveal.is-visible { opacity: 1; transform: none; }
+
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        .site-footer {
+            margin-top: 54px;
+            border-top: 1px solid var(--line);
+            background: rgba(7, 11, 20, 0.7);
+            padding: 26px 0;
+        }
+
+        .footer-inner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+
+        .footer-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; color: #cbd5e1; }
+        .footer-brand i { color: #38bdf8; }
+        .footer-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .footer-meta span { padding: 4px 9px; border-radius: 6px; background: rgba(30, 41, 59, 0.55); border: 1px solid var(--line); }
+
+        /* ============================================================
+           BACK TO TOP
+           ============================================================ */
+        .to-top {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 45;
+            width: 44px;
+            height: 44px;
+            border-radius: 13px;
+            border: 1px solid var(--line-strong);
+            background: rgba(15, 23, 42, 0.85);
+            color: #cbd5e1;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+            backdrop-filter: blur(10px);
+        }
+
+        .to-top.is-visible { opacity: 1; visibility: visible; transform: none; }
+        .to-top:hover { color: #fff; border-color: rgba(56, 189, 248, 0.5); background: rgba(30, 41, 59, 0.95); }
+
+        /* ============================================================
+           MODAL
+           ============================================================ */
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 22px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s;
+        }
+
+        .modal.is-open { opacity: 1; visibility: visible; }
+
+        .modal-backdrop-el {
+            position: absolute;
+            inset: 0;
+            background: rgba(3, 7, 16, 0.78);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .modal-panel {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 940px;
+            max-height: min(88vh, 860px);
+            display: flex;
+            flex-direction: column;
+            border-radius: 24px;
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            background:
+                radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--modal-accent) 10%, transparent) 0%, transparent 55%),
+                linear-gradient(180deg, #0e172a, #0a1120 65%);
+            box-shadow: 0 50px 120px -40px #000, inset 0 1px 0 rgba(255, 255, 255, 0.07);
+            overflow: hidden;
+            transform: translateY(16px) scale(0.975);
+            opacity: 0;
+            transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+        }
+
+        .modal.is-open .modal-panel { transform: none; opacity: 1; }
+
+        .modal-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(7, 11, 20, 0.45);
+            flex: 0 0 auto;
+        }
+
+        .modal-step {
+            flex: 0 0 auto;
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            display: grid;
+            place-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 600;
+            color: #04121f;
+            background: linear-gradient(140deg, var(--modal-accent), color-mix(in srgb, var(--modal-accent) 60%, #6366f1));
+            box-shadow: 0 12px 30px -12px var(--modal-accent), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .modal-titles { flex: 1 1 auto; min-width: 0; }
+
+        .modal-eyebrow {
+            margin: 0 0 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--modal-accent);
+            font-weight: 600;
+        }
+
+        .modal-titles h2 {
+            margin: 0;
+            font-size: clamp(1.1rem, 2.4vw, 1.42rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #f4f8ff;
+            line-height: 1.25;
+        }
+
+        .icon-btn {
+            flex: 0 0 auto;
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            border: 1px solid var(--line);
+            background: rgba(30, 41, 59, 0.6);
+            color: var(--muted);
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .icon-btn:hover { color: #fff; background: rgba(51, 65, 85, 0.9); border-color: var(--line-strong); transform: rotate(90deg); }
+
+        .modal-tabs {
+            flex: 0 0 auto;
+            display: flex;
+            gap: 8px;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--line);
+            overflow-x: auto;
+            scrollbar-width: none;
+            background: rgba(9, 15, 28, 0.5);
+        }
+
+        .modal-tabs::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            flex: 0 0 auto;
+            padding: 9px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: rgba(30, 41, 59, 0.45);
+            color: #a7b4c9;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .tab-btn:hover { color: #fff; border-color: var(--line-strong); background: rgba(51, 65, 85, 0.6); }
+
+        .tab-btn.active {
+            color: #04121f;
+            border-color: transparent;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--modal-accent) 82%, #fff), var(--modal-accent));
+            box-shadow: 0 10px 24px -12px var(--modal-accent), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .modal-body {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding: 22px 26px 28px;
+            color: #c2cede;
+            font-size: 14px;
+            line-height: 1.72;
+        }
+
+        .modal-body::-webkit-scrollbar { width: 9px; }
+        .modal-body::-webkit-scrollbar-track { background: transparent; }
+        .modal-body::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.45); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+        .modal-body::-webkit-scrollbar-thumb:hover { background: rgba(125, 211, 252, 0.6); background-clip: content-box; }
+
+        /* Table polish inside injected content */
+        .modal-body table { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
+        .modal-body thead th { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+        .modal-body tbody tr { transition: background 0.15s ease; }
+        .modal-body tbody tr:hover { background: rgba(148, 163, 184, 0.05); }
+        .modal-body strong { color: #f1f5f9; }
+        .modal-body h4 { letter-spacing: -0.01em; }
+        .modal-body > p:first-child { margin-top: 0; }
+
+        .modal-foot {
+            flex: 0 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 24px;
+            border-top: 1px solid var(--line);
+            background: rgba(7, 11, 20, 0.5);
+        }
+
+        .modal-keys { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--muted-dim); }
+
+        .modal-keys kbd {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
+            padding: 3px 6px;
+            border-radius: 5px;
+            border: 1px solid var(--line-strong);
+            background: rgba(30, 41, 59, 0.7);
+            color: #cbd5e1;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+        }
+
+        .modal-nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .modal-nav .btn { padding: 9px 14px; font-size: 12px; border-radius: 10px; }
+        .modal-nav .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+        @media (max-width: 640px) {
+            .modal-keys { display: none; }
+            .modal-nav { width: 100%; }
+            .modal-nav .btn { flex: 1 1 0; }
+            .modal-nav .btn-close-mobile { display: none; }
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 900px) {
+            .header-inner { padding: 10px 16px; gap: 10px; }
+            .brand-text small { display: none; }
+            .stage-nav { gap: 2px; padding: 4px; }
+            .stage-nav a { width: 28px; height: 28px; font-size: 10px; }
+            .header-cta { display: none; }
+            .shell { padding: 0 18px; }
+            .hero { padding: 54px 0 36px; }
+            .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px; }
+            .flow-head { flex-direction: column; align-items: flex-start; gap: 14px; }
+            .flow-legend { white-space: normal; }
+        }
+
+        @media (max-width: 860px) {
+            .stages { padding-top: 30px; }
+            .spine { left: 27px; transform: none; }
+            .stage {
+                grid-template-columns: 56px minmax(0, 1fr);
+                column-gap: 16px;
+                margin-bottom: 26px;
+            }
+            .stage-node {
+                grid-column: 1;
+                width: 48px;
+                height: 48px;
+                border-radius: 14px;
+                font-size: 13px;
+                box-shadow: 0 0 0 5px rgba(7, 11, 20, 0.9), 0 12px 26px -12px var(--accent), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            }
+            .stage-meta { display: none; }
+            .stage-card-wrap,
+            .stage:nth-child(odd) .stage-card-wrap,
+            .stage:nth-child(even) .stage-card-wrap {
+                grid-column: 2;
+                justify-content: flex-start;
+            }
+            .stage-card { max-width: none; padding: 18px 18px 15px; }
+            .stage:hover .stage-node { transform: none; }
+        }
+
+        @media (max-width: 560px) {
+            .brand-text { display: none; }
+            .header-inner { padding: 9px 12px; gap: 8px; }
+            .stage-nav { gap: 1px; padding: 3px; }
+            .stage-nav a { width: 26px; height: 26px; font-size: 9.5px; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 2.1rem; }
+            .hero-actions { flex-direction: column; align-items: center; }
+            .hero-actions .btn { width: 100%; max-width: 320px; }
+            .stat { padding: 13px 11px; }
+            .stat dd { font-size: 16px; }
+            .modal { padding: 10px; }
+            .modal-panel { max-height: 94dvh; border-radius: 18px; }
+            .modal-head { padding: 15px 16px; gap: 11px; }
+            .modal-step { width: 42px; height: 42px; border-radius: 12px; font-size: 14px; }
+            .modal-tabs { padding: 11px 16px; }
+            .modal-body { padding: 18px 16px 22px; font-size: 13.5px; }
+            .modal-foot { padding: 12px 16px; }
+            .modal-nav .btn span { display: none; }
+            .to-top { right: 14px; bottom: 14px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
+            .reveal { opacity: 1; transform: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient background -->
+    <div class="bg-fx" aria-hidden="true">
+        <span class="orb orb--a"></span>
+        <span class="orb orb--b"></span>
+    </div>
+
+    <!-- STICKY HEADER -->
+    <header class="site-header" id="siteHeader">
+        <div class="header-inner">
+            <a href="#top" class="brand" aria-label="Kembali ke atas">
+                <span class="brand-mark"><i class="fa-solid fa-utensils"></i></span>
+                <span class="brand-text">
+                    <strong>Talenan Satu Tangan</strong>
+                    <small>Teknologi Asistif · Kelompok 6</small>
+                </span>
+            </a>
+
+            <nav class="stage-nav" aria-label="Navigasi tahapan">
+                <a href="#node1" data-stage="node1" style="--dot-accent:#38bdf8" title="Perencanaan">01</a>
+                <a href="#node2" data-stage="node2" style="--dot-accent:#818cf8" title="Studi Pendahuluan">02</a>
+                <a href="#node3" data-stage="node3" style="--dot-accent:#c084fc" title="Asesmen &amp; Analisis">03</a>
+                <a href="#node4" data-stage="node4" style="--dot-accent:#2dd4bf" title="Perancangan Produk">04</a>
+                <a href="#node5" data-stage="node5" style="--dot-accent:#34d399" title="Pembuatan Produk">05</a>
+                <a href="#node6" data-stage="node6" style="--dot-accent:#fbbf24" title="Uji Coba &amp; Perawatan">06</a>
+            </nav>
+
+            <a href="#node1" class="header-cta">Lihat Alur <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        <div class="scroll-track" aria-hidden="true"><span id="scrollBar"></span></div>
+    </header>
+
+    <main id="top">
+        <!-- HERO -->
+        <section class="shell hero">
+            <span class="eyebrow"><i class="fa-solid fa-cube"></i> Alur Proyek Teknologi Asistif Adaptif</span>
+
+            <h1>
+                Alur Pengembangan
+                <span class="grad">Talenan Serbaguna Satu Tangan</span>
+            </h1>
+
+            <p class="lede">
+                Inovasi papan potong adaptif untuk membantu anak tunadaksa
+                (<i>Monoplegia Brakialis</i>) melaksanakan aktivitas memotong, mengupas,
+                dan memarut makanan secara mandiri.
+            </p>
+
+            <div class="hero-actions">
+                <a href="#node1" class="btn btn-primary">Mulai dari Langkah 01 <i class="fa-solid fa-arrow-down"></i></a>
+                <button type="button" class="btn btn-soft" onclick="openModal('node1', 'biaya')">
+                    <i class="fa-solid fa-wallet"></i> Lihat Rencana Biaya
+                </button>
+            </div>
+
+            <dl class="stats">
+                <div class="stat">
+                    <dt>Tahapan</dt>
+                    <dd>6 <span>proses</span></dd>
+                </div>
+                <div class="stat">
+                    <dt>Zona Kerja</dt>
+                    <dd>3 <span>fungsi</span></dd>
+                </div>
+                <div class="stat">
+                    <dt>Dimensi Papan</dt>
+                    <dd>45 × 35 <span>cm</span></dd>
+                </div>
+                <div class="stat">
+                    <dt>Estimasi Biaya</dt>
+                    <dd>Rp417.500</dd>
+                </div>
+            </dl>
+
+            <p class="hint"><i class="fa-solid fa-hand-pointer"></i> Klik kartu tahap untuk membuka detail lengkap dokumen</p>
+        </section>
+
+        <!-- FLOW -->
+        <section class="shell" aria-labelledby="flowTitle">
+            <div class="flow-head">
+                <div>
+                    <p class="kicker">Mindmap · 6 Tahap</p>
+                    <h2 id="flowTitle">Peta Alur Pengembangan</h2>
+                    <p>Setiap tahap memuat dokumen pendukung: latar belakang, analisis, spesifikasi, hingga SOP penggunaan.</p>
+                </div>
+                <span class="flow-legend"><span class="pulse"></span> Alur aktif · dari perencanaan ke uji coba</span>
+            </div>
+
+            <div class="stages" id="stages">
+                <div class="spine" aria-hidden="true"><span class="spine-fill" id="spineFill"></span></div>
+
+                <!-- NODE 1 -->
+                <article class="stage reveal" id="node1" style="--accent:#38bdf8; --accent-2:#0284c7;">
+                    <div class="stage-meta"><span>Stage 01</span><em>Planning</em></div>
+                    <div class="stage-node" aria-hidden="true">01</div>
+                    <div class="stage-card-wrap">
+                        <a class="stage-card" href="#node1" onclick="openModal('node1'); return false;" aria-haspopup="dialog" aria-label="Buka detail tahap 1: Perencanaan">
+                            <div class="card-top">
+                                <span class="step-pill"><span class="dot"></span> Langkah 01</span>
+                                <span class="card-icon"><i class="fa-solid fa-bullseye"></i></span>
+                            </div>
+                            <h3>Perencanaan</h3>
+                            <p>Latar belakang, rumusan masalah, tujuan, manfaat, serta penyusunan estimasi rencana biaya produksi prototipe (Rp417.500).</p>
+                            <div class="card-tags">
+                                <span>Latar Belakang</span>
+                                <span>Rencana Biaya</span>
+                            </div>
+                            <div class="card-open">Buka detail <i class="fa-solid fa-arrow-right"></i></div>
+                        </a>
+                    </div>
+                </article>
+
+                <!-- NODE 2 -->
+                <article class="stage reveal" id="node2" style="--accent:#818cf8; --accent-2:#6366f1;">
+                    <div class="stage-meta"><span>Stage 02</span><em>Preliminary Study</em></div>
+                    <div class="stage-node" aria-hidden="true">02</div>
+                    <div class="stage-card-wrap">
+                        <a class="stage-card" href="#node2" onclick="openModal('node2'); return false;" aria-haspopup="dialog" aria-label="Buka detail tahap 2: Studi Pendahuluan">
+                            <div class="card-top">
+                                <span class="step-pill"><span class="dot"></span> Langkah 02</span>
+                                <span class="card-icon"><i class="fa-solid fa-book-bookmark"></i></span>
+                            </div>
+                            <h3>Studi Pendahuluan</h3>
+                            <p>Landasan konsep teknologi asistif level rendah (low-tech), analisis antropometri &amp; ergonomi, serta tinjauan produk pembanding sejenis.</p>
+                            <div class="card-tags">
+                                <span>Teknologi Asistif</span>
+                                <span>Kajian Produk</span>
+                            </div>
+                            <div class="card-open">Buka detail <i class="fa-solid fa-arrow-right"></i></div>
+                        </a>
+                    </div>
+                </article>
+
+                <!-- NODE 3 -->
+                <article class="stage reveal" id="node3" style="--accent:#c084fc; --accent-2:#a855f7;">
+                    <div class="stage-meta"><span>Stage 03</span><em>Assessment &amp; Analysis</em></div>
+                    <div class="stage-node" aria-hidden="true">03</div>
+                    <div class="stage-card-wrap">
+                        <a class="stage-card" href="#node3" onclick="openModal('node3'); return false;" aria-haspopup="dialog" aria-label="Buka detail tahap 3: Asesmen dan Analisis">
+                            <div class="card-top">
+                                <span class="step-pill"><span class="dot"></span> Langkah 03</span>
+                                <span class="card-icon"><i class="fa-solid fa-user-check"></i></span>
+                            </div>
+                            <h3>Asesmen &amp; Analisis</h3>
+                            <p>Profil subjek acuan (Anak A, 12 th, Monoplegia Brakialis), pemetaan 6 hambatan utama &amp; solusi fitur, serta 5 langkah asesmen langsung.</p>
+                            <div class="card-tags">
+                                <span>Profil Subjek</span>
+                                <span>Tabel Solusi</span>
+                            </div>
+                            <div class="card-open">Buka detail <i class="fa-solid fa-arrow-right"></i></div>
+                        </a>
+                    </div>
+                </article>
+
+                <!-- NODE 4 -->
+                <article class="stage reveal" id="node4" style="--accent:#2dd4bf; --accent-2:#0d9488;">
+                    <div class="stage-meta"><span>Stage 04</span><em>Product Design</em></div>
+                    <div class="stage-node" aria-hidden="true">04</div>
+                    <div class="stage-card-wrap">
+                        <a class="stage-card" href="#node4" onclick="openModal('node4'); return false;" aria-haspopup="dialog" aria-label="Buka detail tahap 4: Perancangan Produk">
+                            <div class="card-top">
+                                <span class="step-pill"><span class="dot"></span> Langkah 04</span>
+                                <span class="card-icon"><i class="fa-solid fa-drafting-compass"></i></span>
+                            </div>
+                            <h3>Perancangan Produk</h3>
+                            <p>Konsep tata letak papan (45×35 cm), pembagian 3 zona kerja (memotong, mengupas, memarut), spesifikasi ukuran antropometri, dan pemilihan material.</p>
+                            <div class="card-tags">
+                                <span>3 Zona Utama</span>
+                                <span>Spesifikasi Ukuran</span>
+                            </div>
+                            <div class="card-open">Buka detail <i class="fa-solid fa-arrow-right"></i></div>
+                        </a>
+                    </div>
+                </article>
+
+                <!-- NODE 5 -->
+                <article class="stage reveal" id="node5" style="--accent:#34d399; --accent-2:#059669;">
+                    <div class="stage-meta"><span>Stage 05</span><em>Manufacturing</em></div>
+                    <div class="stage-node" aria-hidden="true">05</div>
+                    <div class="stage-card-wrap">
+                        <a class="stage-card" href="#node5" onclick="openModal('node5'); return false;" aria-haspopup="dialog" aria-label="Buka detail tahap 5: Pembuatan Produk">
+                            <div class="card-top">
+                                <span class="step-pill"><span class="dot"></span> Langkah 05</span>
+                                <span class="card-icon"><i class="fa-solid fa-hammer"></i></span>
+                            </div>
+                            <h3>Pembuatan Produk</h3>
+                            <p>Daftar alat &amp; bahan, 11 tahapan kerja manufaktur dari persiapan papan kayu, alur geser, pemasangan tusukan stainless, hingga finishing food grade.</p>
+                            <div class="card-tags">
+                                <span>11 Langkah Kerja</span>
+                                <span>Finishing Mineral Oil</span>
+                            </div>
+                            <div class="card-open">Buka detail <i class="fa-solid fa-arrow-right"></i></div>
+                        </a>
+                    </div>
+                </article>
+
+                <!-- NODE 6 -->
+                <article class="stage reveal" id="node6" style="--accent:#fbbf24; --accent-2:#f59e0b;">
+                    <div class="stage-meta"><span>Stage 06</span><em>Testing &amp; Evaluation</em></div>
+                    <div class="stage-node" aria-hidden="true">06</div>
+                    <div class="stage-card-wrap">
+                        <a class="stage-card" href="#node6" onclick="openModal('node6'); return false;" aria-haspopup="dialog" aria-label="Buka detail tahap 6: Uji Coba dan Perawatan">
+                            <div class="card-top">
+                                <span class="step-pill"><span class="dot"></span> Langkah 06</span>
+                                <span class="card-icon"><i class="fa-solid fa-vial-circle-check"></i></span>
+                            </div>
+                            <h3>Uji Coba &amp; Perawatan</h3>
+                            <p>SOP penggunaan pada 3 zona kerja, panduan perawatan/pembersihan kayu &amp; komponen stainless steel, serta protokol keamanan penggunaan.</p>
+                            <div class="card-tags">
+                                <span>SOP Penggunaan</span>
+                                <span>Protokol Perawatan</span>
+                            </div>
+                            <div class="card-open">Buka detail <i class="fa-solid fa-arrow-right"></i></div>
+                        </a>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="shell footer-inner">
+            <span class="footer-brand"><i class="fa-solid fa-cube"></i> Proyek Teknologi Asistif Adaptif</span>
+            <div class="footer-meta">
+                <span>Talenan Serbaguna Satu Tangan</span>
+                <span>UNESA &amp; Tim Pengembang</span>
+                <span>© 2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <button type="button" class="to-top" id="toTop" aria-label="Kembali ke atas">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <!-- MODAL -->
+    <div class="modal" id="detailModal" aria-hidden="true">
+        <div class="modal-backdrop-el" onclick="closeModal()"></div>
+
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle" tabindex="-1" id="modalPanel">
+            <header class="modal-head">
+                <div class="modal-step" id="modalStepBadge">01</div>
+                <div class="modal-titles">
+                    <p class="modal-eyebrow"><i id="modalIcon" class="fa-solid fa-bullseye" aria-hidden="true"></i> Detail Tahap</p>
+                    <h2 id="modalTitle">Judul Node</h2>
+                </div>
+                <button type="button" class="icon-btn" onclick="closeModal()" aria-label="Tutup detail">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </header>
+
+            <div class="modal-tabs no-scrollbar" id="modalTabsContainer" role="tablist" aria-label="Bagian detail tahap"></div>
+
+            <div class="modal-body" id="modalBody" role="tabpanel" tabindex="0"></div>
+
+            <footer class="modal-foot">
+                <div class="modal-keys">
+                    <kbd>Esc</kbd> tutup
+                    <span aria-hidden="true">·</span>
+                    <kbd>←</kbd><kbd>→</kbd> pindah tahap
+                </div>
+                <div class="modal-nav">
+                    <button type="button" class="btn btn-soft" id="prevStage" onclick="goStage(-1)">
+                        <i class="fa-solid fa-arrow-left"></i> <span>Sebelumnya</span>
+                    </button>
+                    <button type="button" class="btn btn-soft" id="nextStage" onclick="goStage(1)">
+                        <span>Berikutnya</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <button type="button" class="btn btn-primary btn-close-mobile" onclick="closeModal()">Tutup</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <noscript>
+        <div style="max-width:720px;margin:24px auto;padding:16px 20px;border:1px solid #334155;border-radius:12px;background:#0f172a;color:#e2e8f0;font-family:sans-serif;">
+            Aktifkan JavaScript untuk membuka detail setiap tahap.
+        </div>
+    </noscript>
+
+    <script>
+        const nodeData = {
+            node1: {
+                step: "01",
+                title: "Perencanaan",
+                tabs: [
+                    { id: "latar", label: "Latar Belakang & Masalah" },
+                    { id: "tujuan", label: "Tujuan & Manfaat" },
+                    { id: "biaya", label: "Rencana Biaya (RAB)" }
+                ],
+                content: {
+                    latar: `
+                        <h4 class="text-lg font-bold text-sky-400 mb-2">Latar Belakang Proyek</h4>
+                        <p class="mb-4">Keterampilan aktivitas kehidupan sehari-hari (ADL) penting untuk kemandirian anak berkebutuhan khusus. Aktivitas menyiapkan makanan seperti memotong, mengupas, dan memarut biasanya membutuhkan koordinasi dua tangan (satu memegang alat, satu menahan bahan).</p>
+                        <p class="mb-4">Pada anak tunadaksa dengan kondisi <strong class="text-white">Monoplegia Brakialis</strong> (hanya satu tangan fungsional), bahan makanan mudah bergeser, licin, dan berisiko tinggi menimbulkan cedera.</p>
+                        
+                        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/60 my-4">
+                            <h5 class="font-bold text-white mb-2"><i class="fa-solid fa-circle-question text-sky-400"></i> Rumusan Masalah Utama:</h5>
+                            <ul class="list-disc pl-5 space-y-1 text-slate-300 text-sm">
+                                <li>Bagaimana merancang Talenan Serbaguna Satu Tangan yang sesuai untuk anak tunadaksa?</li>
+                                <li>Bagaimana mengintegrasikan fungsi memotong, mengupas, dan memarut dalam satu alat?</li>
+                                <li>Bagaimana menerapkan aspek ergonomi, kemudahan, kestabilan, dan keamanan alat?</li>
+                                <li>Bagaimana menguji fungsi dan kelayakan prototipe alat bantu ini?</li>
+                            </ul>
+                        </div>
+                    `,
+                    tujuan: `
+                        <h4 class="text-lg font-bold text-sky-400 mb-2">Tujuan & Manfaat</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                <h5 class="font-semibold text-sky-300 mb-1"><i class="fa-solid fa-bullseye"></i> Tujuan Umum</h5>
+                                <p class="text-xs sm:text-sm">Membantu peserta didik monoplegia brakialis mengolah bahan makanan secara lebih mandiri, aman, dan efisien.</p>
+                            </div>
+                            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                <h5 class="font-semibold text-sky-300 mb-1"><i class="fa-solid fa-list-check"></i> Tujuan Khusus</h5>
+                                <p class="text-xs sm:text-sm">Menjaga kestabilan bahan saat dipotong, memudahkan pengupasan satu tangan, serta menstabilkan parutan.</p>
+                            </div>
+                        </div>
+                        <h5 class="font-bold text-white mt-4 mb-2">Manfaat Multisektoral:</h5>
+                        <ul class="list-disc pl-5 space-y-1 text-sm">
+                            <li><strong>Bagi Peserta Didik:</strong> Meningkatkan kemandirian motorik dan rasa percaya diri.</li>
+                            <li><strong>Bagi Pendidik:</strong> Sebagai media pembelajaran keterampilan kecakapan hidup adaptif.</li>
+                            <li><strong>Bagi Orang Tua:</strong> Memfasilitasi partisipasi anak dalam aktivitas dapur rumah.</li>
+                        </ul>
+                    `,
+                    biaya: `
+                        <h4 class="text-lg font-bold text-sky-400 mb-3">Rencana Biaya Pembuatan Prototipe</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs sm:text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-800 text-sky-300 border-b border-slate-700">
+                                        <th class="p-2.5">No</th>
+                                        <th class="p-2.5">Bahan / Perlengkapan</th>
+                                        <th class="p-2.5">Jumlah</th>
+                                        <th class="p-2.5">Harga Satuan</th>
+                                        <th class="p-2.5 text-right">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800">
+                                    <tr><td class="p-2">1</td><td class="p-2">Papan kayu keras (45x35x2 cm)</td><td class="p-2">1 buah</td><td class="p-2">Rp180.000</td><td class="p-2 text-right">Rp180.000</td></tr>
+                                    <tr><td class="p-2">2</td><td class="p-2">Tusukan SS food grade</td><td class="p-2">3 buah</td><td class="p-2">Rp8.500</td><td class="p-2 text-right">Rp25.500</td></tr>
+                                    <tr><td class="p-2">3</td><td class="p-2">Parutan stainless steel</td><td class="p-2">1 buah</td><td class="p-2">Rp20.000</td><td class="p-2 text-right">Rp20.000</td></tr>
+                                    <tr><td class="p-2">4</td><td class="p-2">Karet antigrip</td><td class="p-2">1 set</td><td class="p-2">Rp15.000</td><td class="p-2 text-right">Rp15.000</td></tr>
+                                    <tr><td class="p-2">5</td><td class="p-2">Baut kupu-kupu stainless steel</td><td class="p-2">1 buah</td><td class="p-2">Rp20.000</td><td class="p-2 text-right">Rp20.000</td></tr>
+                                    <tr><td class="p-2">6</td><td class="p-2">Kayu sekat & tangkai</td><td class="p-2">1 set</td><td class="p-2">Rp35.000</td><td class="p-2 text-right">Rp35.000</td></tr>
+                                    <tr><td class="p-2">7</td><td class="p-2">Lem kayu, sekrup, & amplas</td><td class="p-2">1 set</td><td class="p-2">Rp45.000</td><td class="p-2 text-right">Rp45.000</td></tr>
+                                    <tr><td class="p-2">8</td><td class="p-2">Minyak mineral food grade</td><td class="p-2">1 kemasan</td><td class="p-2">Rp77.000</td><td class="p-2 text-right">Rp77.000</td></tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="bg-sky-950/80 font-bold text-sky-300 border-t border-sky-500/40">
+                                        <td colspan="4" class="p-3 text-right">TOTAL BIAYA:</td>
+                                        <td class="p-3 text-right text-base text-emerald-400">Rp417.500</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    `
+                }
+            },
+
+            node2: {
+                step: "02",
+                title: "Studi Pendahuluan",
+                tabs: [
+                    { id: "konsep", label: "Landasan Konsep" },
+                    { id: "kajian", label: "Kajian Produk Sejenis" },
+                    { id: "kebaruan", label: "Kebaruan Rancangan" }
+                ],
+                content: {
+                    konsep: `
+                        <h4 class="text-lg font-bold text-indigo-400 mb-3">Landasan Konsep</h4>
+                        <div class="space-y-3">
+                            <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50">
+                                <h5 class="font-bold text-white mb-1"><i class="fa-solid fa-hands-holding-child text-indigo-400"></i> Teknologi Asistif (WHO)</h5>
+                                <p class="text-sm">Sistem/produk eksternal yang mempertahankan atau meningkatkan fungsi & kemandirian seseorang. Menggantikan fungsi penahan tangan kedua.</p>
+                            </div>
+                            <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50">
+                                <h5 class="font-bold text-white mb-1"><i class="fa-solid fa-wheelchair text-indigo-400"></i> Monoplegia Brakialis</h5>
+                                <p class="text-sm">Kondisi tunadaksa dengan kelainan fungsi motorik pada salah satu anggota gerak atas (lengan/tangan). Hambatan utama: tidak ada penahan bahan.</p>
+                            </div>
+                            <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50">
+                                <h5 class="font-bold text-white mb-1"><i class="fa-solid fa-microchip text-indigo-400"></i> Teknologi Sederhana (Low-Tech)</h5>
+                                <p class="text-sm">Berdasarkan penelitian Damayanto dkk., teknologi asistif tidak harus elektronik canggih. Bahan kayu, stainless steel, dan karet tanpa komponen listrik lebih mudah dijangkau dan dirawat.</p>
+                            </div>
+                        </div>
+                    `,
+                    kajian: `
+                        <h4 class="text-lg font-bold text-indigo-400 mb-2">Kajian Produk Pembanding</h4>
+                        <p class="mb-3">Kajian produk sejenis dilakukan untuk memetakan fungsi & mekanisme yang sudah ada:</p>
+                        <ul class="list-disc pl-5 space-y-2 text-sm">
+                            <li><strong class="text-white">Desain Papan Potong Adaptif ITS (2022):</strong> Berfokus pada papan potong multifungsi disabilitas dewasa melalui wawancara dan simulasi aktivitas.</li>
+                            <li><strong class="text-white">Studi Terapi Okupasi Gidion dkk. (2022):</strong> Mengkaji aktivitas memasak bagi penyandang stroke sebagai sarana meningkatkan kemampuan fungsional.</li>
+                        </ul>
+                    `,
+                    kebaruan: `
+                        <h4 class="text-lg font-bold text-indigo-400 mb-2">Kesenjangan & Kebaruan Rancangan</h4>
+                        <div class="p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-sm leading-relaxed">
+                            <p class="font-semibold text-indigo-300 mb-2">Inovasi Kebaruan Kelompok:</p>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li>Penggabungan <strong>3 fungsi sekaligus</strong> (memotong, mengupas, memarut) dalam 1 papan ringkas.</li>
+                                <li>Penyesuaian spesifik antropometri anak usia 12 tahun.</li>
+                                <li>Sistem sekat geser bertangkai dengan pengunci baut kupu-kupu yang aman & mudah disesuaikan 1 tangan.</li>
+                                <li>Perhatian khusus pada proteksi keamanan (tutup tusukan & penahan parutan bertingkat).</li>
+                            </ul>
+                        </div>
+                    `
+                }
+            },
+
+            node3: {
+                step: "03",
+                title: "Asesmen & Analisis Kebutuhan",
+                tabs: [
+                    { id: "subjek", label: "Profil Subjek Acuan" },
+                    { id: "hambatan", label: "Tabel Hambatan & Solusi" },
+                    { id: "asesmen", label: "Prosedur Asesmen Langsung" }
+                ],
+                content: {
+                    subjek: `
+                        <h4 class="text-lg font-bold text-purple-400 mb-3">Profil Subjek Acuan (Anak A)</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div class="p-3 bg-slate-800 rounded-lg border border-slate-700"><strong>Inisial / Usia:</strong> Anak A / 12 Tahun</div>
+                            <div class="p-3 bg-slate-800 rounded-lg border border-slate-700"><strong>Kondisi:</strong> Tunadaksa Monoplegia Brakialis</div>
+                            <div class="p-3 bg-slate-800 rounded-lg border border-slate-700"><strong>Tangan Fungsional:</strong> Tangan Kanan (Dominan)</div>
+                            <div class="p-3 bg-slate-800 rounded-lg border border-slate-700"><strong>Kapasitas Kognitif:</strong> Mampu ikuti instruksi bertahap</div>
+                        </div>
+                        <p class="mt-3 text-xs text-slate-400">Rasionalisasi usia 12 tahun: Memiliki pemahaman K3 aman pisau, motorik halus tangan kanan sudah matang, dan ukuran genggaman cukup kuat.</p>
+                    `,
+                    hambatan: `
+                        <h4 class="text-lg font-bold text-purple-400 mb-3">Pemetaan Hambatan & Fitur Solusi</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs sm:text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-800 text-purple-300 border-b border-slate-700">
+                                        <th class="p-2">Hambatan</th>
+                                        <th class="p-2">Akibat</th>
+                                        <th class="p-2">Fitur Solusi Desain</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800 text-xs">
+                                    <tr><td class="p-2 font-medium">Tidak ada tangan penahan</td><td class="p-2">Bahan bergeser/licin</td><td class="p-2 text-purple-300">Sekat geser bertusukan food grade + sekat tetap</td></tr>
+                                    <tr><td class="p-2 font-medium">Sulit atur penahan saat pegang alat</td><td class="p-2">Gerakan canggung</td><td class="p-2 text-purple-300">Tangkai geser & baut pengunci kupu-kupu</td></tr>
+                                    <tr><td class="p-2 font-medium">Bahan bulat menggelinding saat dikupas</td><td class="p-2">Risiko pisau tergelincir</td><td class="p-2 text-purple-300">Zona mengupas khusus dengan sekat & penahan kayu</td></tr>
+                                    <tr><td class="p-2 font-medium">Parutan ikut bergeser saat digesek</td><td class="p-2">Hasil berantakan & bahaya jari</td><td class="p-2 text-purple-300">Penahan parutan bertingkat (kiri tinggi, kanan rendah)</td></tr>
+                                    <tr><td class="p-2 font-medium">Alat bergeser di atas meja</td><td class="p-2">Seluruh papan tidak stabil</td><td class="p-2 text-purple-300">Alas karet antigrip di bagian bawah papan</td></tr>
+                                    <tr><td class="p-2 font-medium">Risiko tertusuk / terkena parut</td><td class="p-2">Cedera fisik</td><td class="p-2 text-purple-300">Tutup pelindung tusukan & pelindung parutan</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `,
+                    asesmen: `
+                        <h4 class="text-lg font-bold text-purple-400 mb-2">5 Langkah Prosedur Asesmen Langsung</h4>
+                        <ol class="list-decimal pl-5 space-y-2 text-sm">
+                            <li><strong>Perizinan & Ethical Clearance:</strong> Informed consent sekolah & orang tua.</li>
+                            <li><strong>Observasi Partisipatif:</strong> Mengamati titik kesulitan anak saat aktivitas dapur.</li>
+                            <li><strong>Pengukuran Antropometri:</strong> Mengukur panjang/lebar telapak, lingkar genggam, & tinggi siku.</li>
+                            <li><strong>Wawancara Mendalam:</strong> Menggali rasa nyaman & preferensi warna/bentuk.</li>
+                            <li><strong>Pembaruan Data & Ukuran:</strong> Penyesuaian presisi dimensi alat berdasarkan hasil uji.</li>
+                        </ol>
+                    `
+                }
+            },
+
+            node4: {
+                step: "04",
+                title: "Perancangan Produk",
+                tabs: [
+                    { id: "dimensi", label: "Dimensi & Tata Letak" },
+                    { id: "ergonomi", label: "Antropometri & Ergonomi" },
+                    { id: "material", label: "Spesifikasi Bahan" }
+                ],
+                content: {
+                    dimensi: `
+                        <h4 class="text-lg font-bold text-teal-400 mb-3">Tata Letak & Dimensi Produk</h4>
+                        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 mb-4 text-center">
+                            <span class="text-xs text-teal-300 font-mono block mb-1">UKURAN UTAMA PAPAN: 45 x 35 cm (Ketebalan 2 cm)</span>
+                            <div class="grid grid-cols-2 gap-2 mt-2 text-xs">
+                                <div class="bg-slate-800 p-2 rounded border border-slate-700">
+                                    <strong class="text-white block">Zona Memotong</strong>
+                                    28 x 18 cm
+                                </div>
+                                <div class="bg-slate-800 p-2 rounded border border-slate-700">
+                                    <strong class="text-white block">Zona Mengupas</strong>
+                                    17 x 18 cm
+                                </div>
+                            </div>
+                            <div class="bg-slate-800 p-2 rounded border border-slate-700 mt-2 text-xs">
+                                <strong class="text-white block">Zona Memarut (Bagian Bawah)</strong>
+                                20 x 12 cm
+                            </div>
+                        </div>
+                        <ul class="list-disc pl-5 space-y-1 text-sm">
+                            <li><strong>Alur Geser:</strong> Panjang 12 cm untuk menyesuaikan ukuran bahan 3-8 cm.</li>
+                            <li><strong>Tangkai Geser:</strong> Tinggi 10-11 cm, diameter 3 cm (sesuai lingkar genggam 10 cm).</li>
+                            <li><strong>Tusukan SS:</strong> 3 unit, menonjol 1,5 - 2 cm dari sekat.</li>
+                        </ul>
+                    `,
+                    ergonomi: `
+                        <h4 class="text-lg font-bold text-teal-400 mb-2">Penerapan Antropometri & Ergonomi</h4>
+                        <ul class="list-disc pl-5 space-y-2 text-sm">
+                            <li><strong>Jangkauan Tangan:</strong> Kedalaman 35 cm & lebar 45 cm memastikan seluruh zona dapat dijangkau tanpa mengubah posisi duduk secara drastis.</li>
+                            <li><strong>Tinggi Permukaan Kerja:</strong> Pedoman CCOHS menempatkan area kerja memotong 15-40 cm di bawah siku. Tinggi kerja berdiri disesuaikan ~78 cm, dan posisi duduk ~47 cm.</li>
+                            <li><strong>Proteksi Jarak Aman:</strong> Tangkai penggeser berjarak minimal 5 cm dari jalur lintasan pisau.</li>
+                        </ul>
+                    `,
+                    material: `
+                        <h4 class="text-lg font-bold text-teal-400 mb-3">Spesifikasi Material Produk</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                <strong class="text-teal-300 block">Papan & Sekat:</strong> Kayu keras (Jati / Mahoni) - Kokoh, tahan pakai, awet.
+                            </div>
+                            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                <strong class="text-teal-300 block">Tusukan & Parutan:</strong> Stainless Steel Food Grade - Tahan karat & higienis.
+                            </div>
+                            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                <strong class="text-teal-300 block">Alas Bawah:</strong> Karet Antigrip (Tebal 3mm) - Mencegah pergeseran di meja.
+                            </div>
+                            <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                <strong class="text-teal-300 block">Finishing:</strong> Mineral Oil Food Grade - Aman untuk makanan & merawat kayu.
+                            </div>
+                        </div>
+                    `
+                }
+            },
+
+            node5: {
+                step: "05",
+                title: "Pembuatan Produk",
+                tabs: [
+                    { id: "alat", label: "Alat & Bahan" },
+                    { id: "langkah", label: "11 Langkah Kerja Sistematis" }
+                ],
+                content: {
+                    alat: `
+                        <h4 class="text-lg font-bold text-emerald-400 mb-2">Alat & Bahan Pertukangan</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700">
+                                <h5 class="font-bold text-emerald-300 mb-2"><i class="fa-solid fa-wrench"></i> Alat Utama:</h5>
+                                <p>Gergaji, Bor Listrik, Amplas, Meteran, Pensil, Obeng, dan Jangka Sorong.</p>
+                            </div>
+                            <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700">
+                                <h5 class="font-bold text-emerald-300 mb-2"><i class="fa-solid fa-box"></i> Bahan Utama:</h5>
+                                <p>Papan kayu jati/mahoni, tusukan SS, parutan SS, karet antigrip, baut kupu-kupu, lem kayu, sekrup, minyak mineral food grade.</p>
+                            </div>
+                        </div>
+                    `,
+                    langkah: `
+                        <h4 class="text-lg font-bold text-emerald-400 mb-3">11 Tahapan Prosedur Pembuatan Prototipe</h4>
+                        <ol class="list-decimal pl-5 space-y-2 text-xs sm:text-sm">
+                            <li><strong>Persiapan Papan Kayu:</strong> Memotong kayu sesuai dimensi 45 x 35 x 2 cm.</li>
+                            <li><strong>Penghalusan & Pembentukan Tepi:</strong> Mengamplas halus dan membulatkan sudut tumpul.</li>
+                            <li><strong>Pembagian Zona Kerja:</strong> Menandai area memotong, mengupas, dan memarut.</li>
+                            <li><strong>Pembuatan Alur Geser:</strong> Membuat parit geser 12 cm pada zona memotong dengan bor & pahat.</li>
+                            <li><strong>Pemasangan Sekat Kanan Tetap:</strong> Mengunci sekat kanan dengan lem kayu dan sekrup.</li>
+                            <li><strong>Pembuatan Sekat Kiri Geser:</strong> Memasang 3 tusukan SS, tangkai pegangan, dan baut kupu-kupu.</li>
+                            <li><strong>Pemasangan Sekat Mengupas:</strong> Memasang sekat penahan kayu di zona pengupasan.</li>
+                            <li><strong>Pemasangan Penahan Parutan:</strong> Membuat penahan bertingkat agar parutan stabil dan miring.</li>
+                            <li><strong>Finishing Food Grade:</strong> Mengoleskan mineral oil secara merata ke seluruh kayu.</li>
+                            <li><strong>Pemasangan Karet Antigrip:</strong> Memasang lapisan alas karet di bagian bawah papan.</li>
+                            <li><strong>Pemeriksaan Akhir (QC):</strong> Memastikan kelancaran geser, kekuatan baut, dan penutup tusukan.</li>
+                        </ol>
+                    `
+                }
+            },
+
+            node6: {
+                step: "06",
+                title: "Uji Coba & Perawatan",
+                tabs: [
+                    { id: "sop", label: "SOP Penggunaan 3 Zona" },
+                    { id: "rawat", label: "Protokol Perawatan & K3" }
+                ],
+                content: {
+                    sop: `
+                        <h4 class="text-lg font-bold text-amber-400 mb-3">SOP Penggunaan Berdasarkan Zona Kerja</h4>
+                        <div class="space-y-3 text-sm">
+                            <div class="p-3 bg-slate-800 rounded-lg border border-slate-700">
+                                <strong class="text-amber-300 block mb-1">1. Zona Memotong:</strong>
+                                Longgarkan baut kupu-kupu, geser tangkai sekat kiri, letakkan bahan (wortel/kentang), tekan ke tusukan SS, lalu kencangkan baut pengunci. Potong bahan secara aman.
+                            </div>
+                            <div class="p-3 bg-slate-800 rounded-lg border border-slate-700">
+                                <strong class="text-amber-300 block mb-1">2. Zona Mengupas:</strong>
+                                Sandarkan bahan pada sekat pembatas kayu, gunakan pengupas buah (peeler) dengan tangan kanan dari atas ke bawah.
+                            </div>
+                            <div class="p-3 bg-slate-800 rounded-lg border border-slate-700">
+                                <strong class="text-amber-300 block mb-1">3. Zona Memarut:</strong>
+                                Tancapkan parutan pada dudukan miring bertingkat, gerakkan bahan makanan di atas permukaan parutan secara teratur.
+                            </div>
+                        </div>
+                    `,
+                    rawat: `
+                        <h4 class="text-lg font-bold text-amber-400 mb-2">Panduan Perawatan & Keamanan (K3)</h4>
+                        <ul class="list-disc pl-5 space-y-2 text-sm">
+                            <li><strong>Pembersihan Rutin:</strong> Cuci dengan air hangat dan sabun spons lembut. Jangan direndam dalam air terlalu lama agar kayu tidak lapuk.</li>
+                            <li><strong>Pengeringan Maksimal:</strong> Keringkan dengan lap bersih sebelum disimpan di tempat bersirkulasi baik.</li>
+                            <li><strong>Perawatan Kayu Berkala:</strong> Oleskan minyak mineral food grade 1 bulan sekali agar kayu tidak retak.</li>
+                            <li><strong>Protokol Keamanan (K3):</strong> Selalu pasang penutup tusukan berbahan silikon/plastik saat alat tidak digunakan. Pengawasan pendamping/guru tetap diwajibkan.</li>
+                        </ul>
+                    `
+                }
+            }
+        };
+
+        /* ============================================================
+           STAGE METADATA (accent + icon used by the modal)
+           ============================================================ */
+        const STAGE_META = {
+            node1: { accent: '#38bdf8', icon: 'fa-bullseye' },
+            node2: { accent: '#818cf8', icon: 'fa-book-bookmark' },
+            node3: { accent: '#c084fc', icon: 'fa-user-check' },
+            node4: { accent: '#2dd4bf', icon: 'fa-drafting-compass' },
+            node5: { accent: '#34d399', icon: 'fa-hammer' },
+            node6: { accent: '#fbbf24', icon: 'fa-vial-circle-check' }
+        };
+
+        const STAGE_ORDER = ['node1', 'node2', 'node3', 'node4', 'node5', 'node6'];
+
+        let currentActiveNode = null;
+        let currentKey = null;
+        let lastFocusedElement = null;
+
+        /* ============================================================
+           MODAL LOGIC
+           ============================================================ */
+        function openModal(nodeKey, tabId) {
+            const data = nodeData[nodeKey];
+            const meta = STAGE_META[nodeKey];
+            if (!data || !meta) return;
+
+            const modal = document.getElementById('detailModal');
+            if (!modal.classList.contains('is-open')) {
+                lastFocusedElement = document.activeElement;
+                if (!lastFocusedElement || lastFocusedElement === document.body) {
+                    lastFocusedElement = document.querySelector('#' + nodeKey + ' .stage-card');
+                }
+            }
+            currentActiveNode = data;
+            currentKey = nodeKey;
+
+            // Theme the modal with the stage accent
+            document.documentElement.style.setProperty('--modal-accent', meta.accent);
+            document.getElementById('modalStepBadge').innerText = data.step;
+            document.getElementById('modalIcon').className = 'fa-solid ' + meta.icon;
+
+            document.getElementById('modalTitle').innerText = data.title;
+
+            // Tabs
+            const tabsContainer = document.getElementById('modalTabsContainer');
+            tabsContainer.innerHTML = '';
+
+            data.tabs.forEach((tab, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'tab-btn' + (index === 0 ? ' active' : '');
+                btn.textContent = tab.label;
+                btn.dataset.tabId = tab.id;
+                btn.setAttribute('role', 'tab');
+                btn.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+                btn.addEventListener('click', function () { switchTab(tab.id, btn); });
+                tabsContainer.appendChild(btn);
+            });
+
+            const hasRequestedTab = tabId && data.content[tabId];
+            const initialTab = hasRequestedTab ? tabId : data.tabs[0].id;
+            const initialBtn = tabsContainer.querySelector('[data-tab-id="' + initialTab + '"]');
+            if (initialBtn) switchTab(initialTab, initialBtn);
+
+            // Stage navigation state
+            const idx = STAGE_ORDER.indexOf(nodeKey);
+            document.getElementById('prevStage').disabled = idx <= 0;
+            document.getElementById('nextStage').disabled = idx >= STAGE_ORDER.length - 1;
+
+            // Open
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+
+            if (history.replaceState) {
+                history.replaceState(null, '', '#' + nodeKey);
+            }
+
+            const panel = document.getElementById('modalPanel');
+            requestAnimationFrame(function () {
+                panel.focus({ preventScroll: true });
+            });
+        }
+
+        function switchTab(tabId, clickedBtn) {
+            const allTabs = document.querySelectorAll('.tab-btn');
+            allTabs.forEach(function (btn) {
+                const isTarget = btn === clickedBtn;
+                btn.classList.toggle('active', isTarget);
+                btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+            });
+
+            if (currentActiveNode && currentActiveNode.content[tabId]) {
+                document.getElementById('modalBody').innerHTML = currentActiveNode.content[tabId];
+                document.getElementById('modalBody').scrollTop = 0;
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detailModal');
+            if (!modal.classList.contains('is-open')) return;
+
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+
+            if (history.replaceState) {
+                history.replaceState(null, '', location.pathname + location.search);
+            }
+
+            if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                lastFocusedElement.focus({ preventScroll: true });
+            }
+
+            currentActiveNode = null;
+            currentKey = null;
+        }
+
+        function goStage(direction) {
+            if (!currentKey) return;
+            const nextKey = STAGE_ORDER[STAGE_ORDER.indexOf(currentKey) + direction];
+            if (nextKey) openModal(nextKey);
+        }
+
+        /* Keyboard: Esc closes, arrows switch stages, Tab is trapped in the modal */
+        document.addEventListener('keydown', function (event) {
+            const modal = document.getElementById('detailModal');
+            const isOpen = modal.classList.contains('is-open');
+
+            if (!isOpen) return;
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeModal();
+                return;
+            }
+
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                goStage(-1);
+                return;
+            }
+
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                goStage(1);
+                return;
+            }
+
+            if (event.key === 'Tab') {
+                const panel = document.getElementById('modalPanel');
+                const focusable = panel.querySelectorAll(
+                    'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                if (!focusable.length) return;
+
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
+            }
+        });
+
+        /* ============================================================
+           SCROLL PROGRESS + SPY + REVEAL
+           ============================================================ */
+        const headerEl = document.getElementById('siteHeader');
+        const scrollBarEl = document.getElementById('scrollBar');
+        const spineFillEl = document.getElementById('spineFill');
+        const stagesEl = document.getElementById('stages');
+        const toTopEl = document.getElementById('toTop');
+        const navLinks = Array.from(document.querySelectorAll('.stage-nav a'));
+        const stageEls = STAGE_ORDER.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+
+        let ticking = false;
+
+        function onScroll() {
+            if (ticking) return;
+            ticking = true;
+
+            requestAnimationFrame(function () {
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const pageProgress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+
+                scrollBarEl.style.width = Math.min(100, Math.max(0, pageProgress)) + '%';
+                headerEl.classList.toggle('is-scrolled', scrollTop > 12);
+                toTopEl.classList.toggle('is-visible', scrollTop > 560);
+
+                // Fill the timeline spine up to the viewport center
+                const rect = stagesEl.getBoundingClientRect();
+                const reached = window.innerHeight * 0.55 - rect.top;
+                const fill = rect.height > 0 ? Math.min(100, Math.max(0, (reached / rect.height) * 100)) : 0;
+                spineFillEl.style.height = fill + '%';
+
+                ticking = false;
+            });
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+
+        // Scroll spy for the header dots
+        if ('IntersectionObserver' in window) {
+            const spy = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) return;
+                    navLinks.forEach(function (link) {
+                        link.classList.toggle('is-active', link.dataset.stage === entry.target.id);
+                    });
+                });
+            }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+
+            stageEls.forEach(function (el) { spy.observe(el); });
+
+            // Reveal on scroll
+            const revealObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add('is-visible');
+                    revealObserver.unobserve(entry.target);
+                });
+            }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+
+            document.querySelectorAll('.reveal').forEach(function (el, index) {
+                el.style.setProperty('--delay', (index % 3) * 70 + 'ms');
+                revealObserver.observe(el);
+            });
+        } else {
+            document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('is-visible'); });
+        }
+
+        // Back to top
+        toTopEl.addEventListener('click', function () {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Header links: smooth scroll without touching the modal hash
+        navLinks.forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                const target = document.getElementById(link.dataset.stage);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    history.replaceState(null, '', location.pathname + location.search);
+                }
+            });
+        });
+
+        // Initial render
+        onScroll();
+
+        // Deep link: /#node4 opens that stage directly
+        (function openFromHash() {
+            const hash = (location.hash || '').replace('#', '');
+            if (nodeData[hash]) {
+                openModal(hash);
+            }
+        })();
+    </script>
+</body>
+</html>
